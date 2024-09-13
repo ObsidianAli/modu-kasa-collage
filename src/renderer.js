@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let offsetX = 0, offsetY = 0;
     let draggedItem = null;
     
+    let itemStartX, itemStartY; // Keep track of item start position when dragging
+    
     // Track the current zoom level
     let scale = 1;
     const scaleFactor = 0.1;
@@ -25,8 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type === 'text') {
             item.innerText = content || 'Sample Text';
             item.contentEditable = true;
+            item.style.whiteSpace = 'nowrap';  // Prevent text from wrapping
         } else if (type === 'folder') {
             item.innerText = content || 'New Folder';
+            item.style.whiteSpace = 'nowrap';  // Prevent folder name from wrapping
         } else if (type === 'image') {
             const img = document.createElement('img');
             img.src = content || 'https://via.placeholder.com/100';
@@ -37,6 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
         item.style.position = 'absolute';
         item.style.left = '100px';
         item.style.top = '100px';
+        item.style.width = '120px'; // Ensure fixed width
+        item.style.height = 'auto'; // Ensure height adapts
+        item.style.maxWidth = '120px'; // Prevent it from growing too large
+        item.style.overflow = 'hidden'; // Hide overflow text
         item.classList.add('draggable');
 
         gridContent.appendChild(item);
@@ -47,6 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 draggedItem = item;
                 startX = event.clientX;
                 startY = event.clientY;
+
+                // Record the current item's position
+                itemStartX = parseInt(draggedItem.style.left, 10);
+                itemStartY = parseInt(draggedItem.style.top, 10);
+
                 gridContainer.style.cursor = 'grabbing';
                 event.preventDefault();
             }
@@ -78,15 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (isDraggingItem && draggedItem) {
-            const dx = event.clientX - startX;
-            const dy = event.clientY - startY;
-            const currentLeft = parseInt(draggedItem.style.left, 10);
-            const currentTop = parseInt(draggedItem.style.top, 10);
-            draggedItem.style.left = `${currentLeft + dx}px`;
-            draggedItem.style.top = `${currentTop + dy}px`;
+            // Adjust for zoom level
+            const dx = (event.clientX - startX) / scale;
+            const dy = (event.clientY - startY) / scale;
 
-            startX = event.clientX;
-            startY = event.clientY;
+            draggedItem.style.left = `${itemStartX + dx}px`;
+            draggedItem.style.top = `${itemStartY + dy}px`;
         }
     });
 
