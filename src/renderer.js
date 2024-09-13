@@ -24,10 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (type === 'image') {
             const img = document.createElement('img');
             img.src = content || 'https://via.placeholder.com/100'; // Placeholder image
+            img.style.pointerEvents = 'none'; // Prevent image from interfering with mouse events
             item.appendChild(img);
         }
 
         // Set the initial position of the item within the grid content
+        item.style.position = 'absolute'; // Ensure absolute positioning for draggable items
         item.style.left = '100px';
         item.style.top = '100px';
         item.classList.add('draggable');
@@ -43,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 startX = event.clientX;
                 startY = event.clientY;
                 gridContainer.style.cursor = 'grabbing';
+                event.preventDefault(); // Prevent default behavior to avoid interference
             }
         });
     }
@@ -68,8 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
             offsetX += dx;
             offsetY += dy;
 
-            // Move the items and background together
+            // Move the grid content
             gridContent.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+            // Correct the direction for the background position
             gridContainer.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
 
             // Update the starting point for the next move event
