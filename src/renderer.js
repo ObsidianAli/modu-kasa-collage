@@ -8,8 +8,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPanning = false;
     let isDraggingItem = false;
     let startX, startY;
-    let offsetX = 0, offsetY = 0; // Track how far we've panned
+    let offsetX = 0, offsetY = 0;
     let draggedItem = null;
+    
+    let itemStartX, itemStartY; // Keep track of item start position when dragging
+    
+    // Track the current zoom level
+    let scale = 1;
+    const scaleFactor = 0.1;
+    const minScale = 0.2;
+    const maxScale = 2;
 
     // Helper function to add draggable items to the grid
     function addItem(type, content = '') {
@@ -18,39 +26,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (type === 'text') {
             item.innerText = content || 'Sample Text';
-            item.contentEditable = true; // Allow inline editing
+            item.contentEditable = true;
+            item.style.whiteSpace = 'nowrap';  // Prevent text from wrapping
         } else if (type === 'folder') {
             item.innerText = content || 'New Folder';
+            item.style.whiteSpace = 'nowrap';  // Prevent folder name from wrapping
         } else if (type === 'image') {
             const img = document.createElement('img');
-            img.src = content || 'https://via.placeholder.com/100'; // Placeholder image
-            img.style.pointerEvents = 'none'; // Prevent image from interfering with mouse events
+            img.src = content || 'https://via.placeholder.com/100';
+            img.style.pointerEvents = 'none';
             item.appendChild(img);
         }
 
-        // Set the initial position of the item within the grid content
-        item.style.position = 'absolute'; // Ensure absolute positioning for draggable items
+        item.style.position = 'absolute';
         item.style.left = '100px';
         item.style.top = '100px';
+        item.style.width = '120px'; // Ensure fixed width
+        item.style.height = 'auto'; // Ensure height adapts
+        item.style.maxWidth = '120px'; // Prevent it from growing too large
+        item.style.overflow = 'hidden'; // Hide overflow text
         item.classList.add('draggable');
 
-        // Add the item to the grid content area
         gridContent.appendChild(item);
 
-        // Enable dragging the item with the left mouse button
         item.addEventListener('mousedown', (event) => {
             if (event.button === 0) {  // Left mouse button
                 isDraggingItem = true;
                 draggedItem = item;
                 startX = event.clientX;
                 startY = event.clientY;
+
+                // Record the current item's position
+                itemStartX = parseInt(draggedItem.style.left, 10);
+                itemStartY = parseInt(draggedItem.style.top, 10);
+
                 gridContainer.style.cursor = 'grabbing';
-                event.preventDefault(); // Prevent default behavior to avoid interference
+                event.preventDefault();
             }
         });
     }
 
-    // Mouse down starts panning with middle mouse button
+    // Mouse down starts panning
     gridContainer.addEventListener('mousedown', (event) => {
         if (event.button === 1) {  // Middle mouse button
             isPanning = true;
@@ -63,42 +79,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mouse move handles panning and item dragging
     gridContainer.addEventListener('mousemove', (event) => {
         if (isPanning) {
-            // Calculate how far the mouse has moved
             const dx = event.clientX - startX;
             const dy = event.clientY - startY;
-
-            // Update the offsets and apply them to both grid content and background grid
             offsetX += dx;
             offsetY += dy;
+            gridContent.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
 
-            // Move the grid content
-            gridContent.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-            // Correct the direction for the background position
+            // Adjust the background position so that it moves in sync with the items
             gridContainer.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
 
-            // Update the starting point for the next move event
             startX = event.clientX;
             startY = event.clientY;
         }
 
         if (isDraggingItem && draggedItem) {
-            // Move the dragged item
-            const dx = event.clientX - startX;
-            const dy = event.clientY - startY;
+            // Adjust for zoom level
+            const dx = (event.clientX - startX) / scale;
+            const dy = (event.clientY - startY) / scale;
 
-            const currentLeft = parseInt(draggedItem.style.left, 10);
-            const currentTop = parseInt(draggedItem.style.top, 10);
-
-            draggedItem.style.left = `${currentLeft + dx}px`;
-            draggedItem.style.top = `${currentTop + dy}px`;
-
-            // Update the starting point for the next move event
-            startX = event.clientX;
-            startY = event.clientY;
+            draggedItem.style.left = `${itemStartX + dx}px`;
+            draggedItem.style.top = `${itemStartY + dy}px`;
         }
     });
 
-    // Mouse up stops both panning and item dragging
+    // Stop panning or dragging when mouse button is released
     gridContainer.addEventListener('mouseup', () => {
         isPanning = false;
         isDraggingItem = false;
@@ -106,7 +110,47 @@ document.addEventListener('DOMContentLoaded', () => {
         gridContainer.style.cursor = 'grab';
     });
 
-    // Stop panning or dragging when mouse leaves the grid
+    // Zoom functionality: mouse wheel event with cursor-following behavior
+    gridContainer.addEventListener('wheel', (event) => {
+        event.preventDefault(); // Prevent default scrolling
+
+        // Get mouse position relative to the container
+        const mouseX = event.clientX - gridContainer.offsetLeft;
+        const mouseY = event.clientY - gridContainer.offsetTop;
+
+        // Get the current content position relative to the grid
+        const rect = gridContent.getBoundingClientRect();
+        const contentX = rect.left - gridContainer.offsetLeft;
+        const contentY = rect.top - gridContainer.offsetTop;
+
+        // Store the current scale before zooming
+        const previousScale = scale;
+
+        // Calculate the new scale factor
+        if (event.deltaY < 0) {
+            // Zoom in
+            scale = Math.min(maxScale, scale + scaleFactor);
+        } else {
+            // Zoom out
+            scale = Math.max(minScale, scale - scaleFactor);
+        }
+
+        // Calculate the scaling ratio
+        const scaleChange = scale / previousScale;
+
+        // Adjust offset so that the content zooms towards the mouse position
+        offsetX = (mouseX - contentX) - (mouseX - contentX) * scaleChange + offsetX;
+        offsetY = (mouseY - contentY) - (mouseY - contentY) * scaleChange + offsetY;
+
+        // Apply the new transform to grid content
+        gridContent.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+
+        // Update the background size and position to zoom in sync with the content
+        gridContainer.style.backgroundSize = `${50 * scale}px ${50 * scale}px`;
+        gridContainer.style.backgroundPosition = `${offsetX}px ${offsetY}px`; // Adjust position to keep it in sync
+    });
+
+    // Mouse leaves the grid area
     gridContainer.addEventListener('mouseleave', () => {
         isPanning = false;
         isDraggingItem = false;

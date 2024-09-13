@@ -10,11 +10,11 @@ body {
 #grid-container {
     width: 100vw;
     height: 100vh;
-    background-size: 50px 50px;
+    background-size: 50px 50px; /* Will be dynamically updated based on zoom */
     background-image: radial-gradient(circle, #bbb 1px, transparent 1px);
     position: absolute;
-    overflow: hidden;  /* Remove scrollbars */
-    cursor: grab;      /* Cursor changes when ready for panning */
+    overflow: hidden;
+    cursor: grab;
     user-select: none;
 }
 
@@ -23,9 +23,9 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    transform-origin: 0 0; /* Ensure scaling happens from the top-left corner */
 }
+
 
 /* Styles for the elements added on the grid */
 .item {
