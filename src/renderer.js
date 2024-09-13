@@ -84,6 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
             offsetX += dx;
             offsetY += dy;
             gridContent.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+
+            // Adjust the background position so that it moves in sync with the items
             gridContainer.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
 
             startX = event.clientX;
@@ -108,9 +110,21 @@ document.addEventListener('DOMContentLoaded', () => {
         gridContainer.style.cursor = 'grab';
     });
 
-    // Zoom functionality: mouse wheel event
+    // Zoom functionality: mouse wheel event with cursor-following behavior
     gridContainer.addEventListener('wheel', (event) => {
         event.preventDefault(); // Prevent default scrolling
+
+        // Get mouse position relative to the container
+        const mouseX = event.clientX - gridContainer.offsetLeft;
+        const mouseY = event.clientY - gridContainer.offsetTop;
+
+        // Get the current content position relative to the grid
+        const rect = gridContent.getBoundingClientRect();
+        const contentX = rect.left - gridContainer.offsetLeft;
+        const contentY = rect.top - gridContainer.offsetTop;
+
+        // Store the current scale before zooming
+        const previousScale = scale;
 
         // Calculate the new scale factor
         if (event.deltaY < 0) {
@@ -121,9 +135,19 @@ document.addEventListener('DOMContentLoaded', () => {
             scale = Math.max(minScale, scale - scaleFactor);
         }
 
-        // Apply the scale to both grid content and grid container
+        // Calculate the scaling ratio
+        const scaleChange = scale / previousScale;
+
+        // Adjust offset so that the content zooms towards the mouse position
+        offsetX = (mouseX - contentX) - (mouseX - contentX) * scaleChange + offsetX;
+        offsetY = (mouseY - contentY) - (mouseY - contentY) * scaleChange + offsetY;
+
+        // Apply the new transform to grid content
         gridContent.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
-        gridContainer.style.backgroundSize = `${50 * scale}px ${50 * scale}px`; // Scale background
+
+        // Update the background size and position to zoom in sync with the content
+        gridContainer.style.backgroundSize = `${50 * scale}px ${50 * scale}px`;
+        gridContainer.style.backgroundPosition = `${offsetX}px ${offsetY}px`; // Adjust position to keep it in sync
     });
 
     // Mouse leaves the grid area
