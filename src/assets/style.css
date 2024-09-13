@@ -45,17 +45,28 @@ body {
     background-color: #f0f0f0;
     border-radius: 5px;
     color: blue;
-    padding: 5px;
-    display: flex;
-    align-items: center;
+    padding: 0; /* Remove padding, handled by container and icon styles */
     cursor: pointer; /* Indicate that the folder is clickable */
+    display: flex;
+    flex-direction: column; /* Stack icon and text vertically */
+    align-items: center; /* Center items horizontally */
+    text-align: center; /* Center text horizontally */
 }
 
+/* Styles for the folder icon */
 .folder img {
-    width: 20px; /* Size of the folder icon */
-    height: auto;
-    margin-right: 5px; /* Space between icon and text */
+    width: 60px; /* Make the icon larger */
+    height: auto; /* Maintain aspect ratio */
+    margin-bottom: 5px; /* Space between icon and text */
 }
+
+/* Folder text styling */
+.folder span {
+    font-size: 14px; /* Text size */
+    font-family: Arial, sans-serif; /* Font family */
+    white-space: nowrap; /* Prevent text from wrapping */
+}
+
 
 /* Text-specific styles */
 .text {
