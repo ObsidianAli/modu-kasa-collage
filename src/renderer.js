@@ -30,7 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
             item.contentEditable = true;
             item.style.whiteSpace = 'nowrap';  // Prevent text from wrapping
         } else if (type === 'folder') {
-            item.innerText = content || 'New Folder';
+            const icon = document.createElement('img');
+            icon.src = 'assets/folder-icon.png'; // Change to the path of your folder icon
+            icon.alt = 'Folder Icon';
+            item.appendChild(icon);
+            const text = document.createElement('span');
+            text.innerText = content || 'New Folder';
+            text.contentEditable = true; // Make folder name editable
+            item.appendChild(text);
             item.style.whiteSpace = 'nowrap';  // Prevent folder name from wrapping
         } else if (type === 'image') {
             const img = document.createElement('img');
@@ -63,6 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 gridContainer.style.cursor = 'grabbing';
                 event.preventDefault();
+            }
+        });
+
+        // Allow folder renaming on double-click
+        item.addEventListener('dblclick', (event) => {
+            if (item.classList.contains('folder')) {
+                const text = item.querySelector('span');
+                text.focus();
+                event.stopPropagation();
             }
         });
     }
