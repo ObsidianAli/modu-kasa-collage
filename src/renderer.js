@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addFolderButton = document.getElementById('add-folder');
     const addTextButton = document.getElementById('add-text');
     const addImageButton = document.getElementById('add-image');
+    const recenterButton = document.getElementById('recenter'); // New recenter button
 
     let isPanning = false;
     let isDraggingItem = false;
@@ -162,4 +163,25 @@ document.addEventListener('DOMContentLoaded', () => {
     addFolderButton.addEventListener('click', () => addItem('folder'));
     addTextButton.addEventListener('click', () => addItem('text'));
     addImageButton.addEventListener('click', () => addItem('image'));
+
+    // Recenter the view
+    recenterButton.addEventListener('click', () => {
+        // Calculate the new offset to center the grid content
+        const containerWidth = gridContainer.clientWidth;
+        const containerHeight = gridContainer.clientHeight;
+
+        const contentRect = gridContent.getBoundingClientRect();
+        const contentWidth = contentRect.width * scale;
+        const contentHeight = contentRect.height * scale;
+
+        offsetX = (containerWidth - contentWidth) / 2;
+        offsetY = (containerHeight - contentHeight) / 2;
+
+        // Apply the new transform to grid content
+        gridContent.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+
+        // Update the background size and position to sync with the content
+        gridContainer.style.backgroundSize = `${50 * scale}px ${50 * scale}px`;
+        gridContainer.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
+    });
 });

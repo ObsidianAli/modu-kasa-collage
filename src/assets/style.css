@@ -26,7 +26,6 @@ body {
     transform-origin: 0 0; /* Ensure scaling happens from the top-left corner */
 }
 
-
 /* Styles for the elements added on the grid */
 .item {
     position: absolute;
@@ -62,4 +61,17 @@ body {
     top: 10px;
     left: 10px;
     z-index: 100;
+}
+
+#controls button {
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#recenter {
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
