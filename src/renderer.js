@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const addFolderButton = document.getElementById('add-folder');
     const addTextButton = document.getElementById('add-text');
     const addImageButton = document.getElementById('add-image');
-    const recenterButton = document.getElementById('recenter'); // New recenter button
+    const recenterButton = document.getElementById('recenter');
+    const backButton = document.getElementById('back');
 
     let isPanning = false;
     let isDraggingItem = false;
@@ -19,6 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const scaleFactor = 0.1;
     const minScale = 0.2;
     const maxScale = 2;
+
+    let folderStack = [];
 
     // Helper function to add draggable items to the grid
     function addItem(type, content = '') {
@@ -39,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
             text.contentEditable = true; // Make folder name editable
             item.appendChild(text);
             item.style.whiteSpace = 'nowrap';  // Prevent folder name from wrapping
+            item.addEventListener('dblclick', () => enterFolder(item));
         } else if (type === 'image') {
             const img = document.createElement('img');
             img.src = content || 'https://via.placeholder.com/100';
@@ -57,6 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         gridContent.appendChild(item);
 
+        attachItemEventListeners(item);
+    }
+
+    function attachItemEventListeners(item) {
         item.addEventListener('mousedown', (event) => {
             if (event.button === 0) {  // Left mouse button
                 isDraggingItem = true;
@@ -73,14 +81,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Allow folder renaming on double-click
-        item.addEventListener('dblclick', (event) => {
-            if (item.classList.contains('folder')) {
-                const text = item.querySelector('span');
-                text.focus();
-                event.stopPropagation();
+        // Remove the renaming feature on double-click
+        if (item.classList.contains('folder')) {
+            item.addEventListener('dblclick', () => enterFolder(item));
+        }
+    }
+
+    function enterFolder(folder) {
+        folderStack.push(gridContent.innerHTML);
+        gridContent.innerHTML = '';
+        backButton.style.display = 'block';
+    }
+
+    function exitFolder() {
+        if (folderStack.length > 0) {
+            gridContent.innerHTML = folderStack.pop();
+            if (folderStack.length === 0) {
+                backButton.style.display = 'none';
             }
-        });
+            // Reattach event listeners to the items
+            const items = gridContent.querySelectorAll('.item');
+            items.forEach(item => attachItemEventListeners(item));
+        }
     }
 
     // Mouse down starts panning
@@ -200,4 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gridContainer.style.backgroundSize = `${50 * scale}px ${50 * scale}px`;
         gridContainer.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
     });
+
+    // Handle back button click
+    backButton.addEventListener('click', exitFolder);
 });
